@@ -67,11 +67,4 @@ void simple_program(cyg_addrword_t data)
 }
 
 
-int main(void)
-{
-  
-  
-
-  return( -1 );
-}
 
