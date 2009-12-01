@@ -3,6 +3,7 @@
 // --------------------------------------------------------------------
 
 `include "timescale.v"
+`include "gpio_defines.v"
 
 
 module top(
@@ -254,7 +255,7 @@ module top(
       // Master 0 Interface
       .m0_data_i(m0_data_o),
       .m0_data_o(m0_data_i),
-      .m0_addr_i( {m0_addr_o[23:20], 8'h00, m0_addr_o[20:0]} ),
+      .m0_addr_i( {m0_addr_o[23:20], 8'b0, m0_addr_o[19:0]} ),
       .m0_sel_i(m0_sel_o),
       .m0_we_i(m0_we_o),
       .m0_cyc_i(m0_cyc_o),
@@ -324,15 +325,27 @@ module top(
       .s0_err_i(s0_err_i),
       .s0_rty_i(s0_rty_i),
       // Slave 1 Interface
-      .s1_data_i(32'h0000_0000),
-      .s1_ack_i(1'b0),
-      .s1_err_i(1'b0),
-      .s1_rty_i(1'b0),
+      .s1_data_i(s1_data_i),
+      .s1_data_o(s1_data_o),
+      .s1_addr_o(s1_addr_o),
+      .s1_sel_o(s1_sel_o),
+      .s1_we_o(s1_we_o),
+      .s1_cyc_o(s1_cyc_o),
+      .s1_stb_o(s1_stb_o),
+      .s1_ack_i(s1_ack_i),
+      .s1_err_i(s1_err_i),
+      .s1_rty_i(s1_rty_i),
       // Slave 2 Interface
-      .s2_data_i(32'h0000_0000),
-      .s2_ack_i(1'b0),
-      .s2_err_i(1'b0),
-      .s2_rty_i(1'b0),
+      .s2_data_i(s2_data_i),
+      .s2_data_o(s2_data_o),
+      .s2_addr_o(s2_addr_o),
+      .s2_sel_o(s2_sel_o),
+      .s2_we_o(s2_we_o),
+      .s2_cyc_o(s2_cyc_o),
+      .s2_stb_o(s2_stb_o),
+      .s2_ack_i(s2_ack_i),
+      .s2_err_i(s2_err_i),
+      .s2_rty_i(s2_rty_i),
       // Slave 3 Interface
       .s3_data_i(32'h0000_0000),
       .s3_ack_i(1'b0),
@@ -435,18 +448,121 @@ module top(
       .lo_byte_if_i(1'b0)
     );
               
-	
+
+  //---------------------------------------------------
+  // GPIO a
+  assign s1_rty_i = 1'b0;
+  
+  wire        gpio_a_inta_o;
+  wire        gpio_a_clk_i;
+  wire [31:0] gpio_a_aux_i;
+  wire [31:0] gpio_a_ext_pad_i;
+  wire [31:0] gpio_a_ext_pad_o;
+  wire [31:0] gpio_a_ext_padoe_o;
+  
+  gpio_top
+    i_gpio_a(
+  	          .wb_clk_i(sys_clk),
+  	          .wb_rst_i(sys_rst),
+  	          .wb_cyc_i(s1_cyc_o),
+  	          .wb_adr_i( {24'b0, s1_addr_o[7:0]} ),
+  	          .wb_dat_i(s1_data_o),
+  	          .wb_sel_i(s1_sel_o),
+  	          .wb_we_i(s1_we_o),
+  	          .wb_stb_i(s1_stb_o),
+  	          .wb_dat_o(s1_data_i),
+  	          .wb_ack_o(s1_ack_i),
+  	          .wb_err_o(s1_err_i),
+  	          .wb_inta_o(gpio_a_inta_o),
+  	          
+`ifdef GPIO_AUX_IMPLEMENT
+  	          .aux_i(gpio_a_aux_i),
+`endif // GPIO_AUX_IMPLEMENT
+  	          
+`ifdef GPIO_CLKPAD
+              .clk_pad_i(gpio_a_clk_i),
+`endif //  GPIO_CLKPAD
+              
+  	          .ext_pad_i(gpio_a_ext_pad_i),
+  	          .ext_pad_o(gpio_a_ext_pad_o),
+  	          .ext_padoe_o(gpio_a_ext_padoe_o)
+            );
+    
+    	
+  //---------------------------------------------------
+  // GPIO b
+  assign s2_rty_i = 1'b0;
+  
+  wire        gpio_b_inta_o;
+  wire        gpio_b_clk_i;
+  wire [31:0] gpio_b_aux_i;
+  wire [31:0] gpio_b_ext_pad_i;
+  wire [31:0] gpio_b_ext_pad_o;
+  wire [31:0] gpio_b_ext_padoe_o;
+  
+  gpio_top
+    i_gpio_b(
+  	          .wb_clk_i(sys_clk),
+  	          .wb_rst_i(sys_rst),
+  	          .wb_cyc_i(s2_cyc_o),
+  	          .wb_adr_i( {24'b0, s2_addr_o[7:0]} ),
+  	          .wb_dat_i(s2_data_o),
+  	          .wb_sel_i(s2_sel_o),
+  	          .wb_we_i(s2_we_o),
+  	          .wb_stb_i(s2_stb_o),
+  	          .wb_dat_o(s2_data_i),
+  	          .wb_ack_o(s2_ack_i),
+  	          .wb_err_o(s2_err_i),
+  	          .wb_inta_o(gpio_b_inta_o),
+  	          
+`ifdef GPIO_AUX_IMPLEMENT
+  	          .aux_i(gpio_b_aux_i),
+`endif // GPIO_AUX_IMPLEMENT
+  	          
+`ifdef GPIO_CLKPAD
+              .clk_pad_i(gpio_b_clk_i),
+`endif //  GPIO_CLKPAD
+              
+  	          .ext_pad_i(gpio_b_ext_pad_i),
+  	          .ext_pad_o(gpio_b_ext_pad_o),
+  	          .ext_padoe_o(gpio_b_ext_padoe_o)
+            );
+            
+    
+  //---------------------------------------------------
+  // IO pads
+  genvar i;
+  
+  // gpio a
+  wire [31:0] gpio_a_io_buffer_o;
+  
+  generate for( i = 0; i < 32; i = i + 1 )
+    begin: gpio_a_pads
+      assign gpio_a_io_buffer_o[i] = gpio_a_ext_padoe_o[i] ? gpio_a_ext_pad_o[i] : 1'bz;
+    end  
+  endgenerate  
+
+  // gpio b
+  wire [31:0] gpio_b_io_buffer_o;
+  
+  generate for( i = 0; i < 32; i = i + 1 )
+    begin: gpio_b_pads
+      assign gpio_b_io_buffer_o[i] = gpio_b_ext_padoe_o[i] ? gpio_b_ext_pad_o[i] : 1'bz;
+    end  
+  endgenerate  
+  
+      	
   //---------------------------------------------------
   // outputs
   
   //  Turn off all display
-  assign  hex0        =   7'h7f;
-  assign  hex1        =   7'h7f;
-  assign  hex2        =   7'h7f;
-  assign  hex3        =   7'h7f;
+//   assign  hex0        =   7'h7f;
+//   assign  hex1        =   7'h7f;
+//   assign  hex2        =   7'h7f;
+//   assign  hex3        =   7'h7f;
 //   assign  ledg        =   8'hff;
-  assign  ledg        =   fled;
-  assign  ledr        =   10'h000;
+//   assign  ledg        =   fled;
+//   assign  ledr        =   10'h000;
   
   //  All inout port turn to tri-state
   assign  dram_dq     =   16'hzzzz;
@@ -457,8 +573,20 @@ module top(
   assign  aud_adclrck =   1'bz;
   assign  aud_daclrck =   1'bz;
   assign  aud_bclk    =   1'bz;
-  assign  gpio_0      =   36'hzzzzzzzzz;
-  assign  gpio_1      =   36'hzzzzzzzzz;
+//   assign  gpio_0      =   36'hzzzzzzzzz;
+//   assign  gpio_1      =   36'hzzzzzzzzz;
+  
+  assign hex0             = gpio_a_io_buffer_o[6:0];
+  assign hex1             = gpio_a_io_buffer_o[14:8];
+  assign hex2             = gpio_a_io_buffer_o[22:16];
+  assign hex3             = gpio_a_io_buffer_o[30:24];
+  assign gpio_a_aux_i     = 32'b0;
+  assign gpio_a_ext_pad_i = 32'b0;
+  
+  assign ledg             = gpio_b_io_buffer_o[7:0];
+  assign ledr             = gpio_b_io_buffer_o[17:8];
+  assign gpio_b_aux_i     = { 24'b0, fled } ;
+  assign gpio_b_ext_pad_i = { key, sw, 18'b0};
   
   
 endmodule

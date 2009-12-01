@@ -85,3 +85,31 @@ load -m tftp  simple-alarm; go 0x81010040
 load -m tftp  dbg_sh; go 0x81010040
 
 load -m tftp  debug; go 0x81010040
+
+
+#
+# test gpio
+iopoke -b 0x83100008 -4 -v 0x7f7f7f7f
+iopoke -b 0x83100004 -4 -v 0x7f7f7f7f
+iopoke -b 0x83100004 -4 -v 0x00000000
+
+dump -b 0x83100000 -4
+
+
+
+iopoke -b 0x83200008 -4 -v 0x0003ffff
+iopoke -b 0x83200008 -4 -v 0x00000000
+iopoke -b 0x83200008 -4 -v 0x00000001
+iopoke -b 0x83200008 -4 -v 0x00000002
+iopoke -b 0x83200008 -4 -v 0x00000004
+iopoke -b 0x83200008 -4 -v 0x00000008
+iopoke -b 0x83200004 -4 -v 0x0003ffff
+iopoke -b 0x83200004 -4 -v 0x00000000
+iopoke -b 0x83200014 -4 -v 0xffffffff
+iopoke -b 0x83200014 -4 -v 0x00000000
+iopoke -b 0x83200014 -4 -v 0x000000ff
+
+dump -b 0x83200000 -4
+
+
+
