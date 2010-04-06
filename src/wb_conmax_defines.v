@@ -38,30 +38,8 @@
 
 //  CVS Log
 //
-//  $Id: wb_conmax_defines.v,v 1.1 2009/10/15 01:06:17 kenagy Exp $
-//
-//  $Date: 2009/10/15 01:06:17 $
-//  $Revision: 1.1 $
-//  $Author: kenagy $
-//  $Locker:  $
-//  $State: Exp $
 //
 // Change History:
-//               $Log: wb_conmax_defines.v,v $
-//               Revision 1.1  2009/10/15 01:06:17  kenagy
-//               no message
-//
-//               Revision 1.1  2009/03/25 22:16:56  kenagy
-//               no message
-//
-//               Revision 1.1  2009/02/19 23:49:39  kenagy
-//               no message
-//
-//               Revision 1.1  2009/02/19 20:11:33  kenagy
-//               no message
-//
-//               Revision 1.1  2008/06/30 20:58:52  kenagy
-//               no message
 //
 //               Revision 1.2  2002/10/03 05:40:07  rudi
 //               Fixed a minor bug in parameter passing, updated headers and specification.

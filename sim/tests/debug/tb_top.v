@@ -39,14 +39,32 @@ module tb_top();
       
       repeat(2) @(posedge tb_clk);
       
-      //     
+      
       $display("\n^^^- \n");
       
+      
+      dut.async_mem.async_mem_write( 32'h83300000, 32'h00000001, 4'b0000 );
+      repeat(6) @(posedge tb_clk); 
       
       dut.async_mem.async_mem_write( 32'h83000000, 32'habbabeef, 4'b0000 );
       repeat(2) @(posedge tb_clk); 
       
       dut.async_mem.async_mem_cmp( 32'h83000000, 32'habbabeef, 4'b0000 );
+      repeat(4) @(posedge tb_clk); 
+      
+      dut.async_mem.async_mem_cmp( 32'h83300fff, 32'h1bad_c0de, 4'b0000 );
+      repeat(2) @(posedge tb_clk); 
+      
+      dut.async_mem.async_mem_write( 32'h83300004, 32'hcafe1a7e, 4'b0000 );
+      repeat(2) @(posedge tb_clk); 
+      
+      dut.async_mem.async_mem_cmp( 32'h83300004, 32'hcafe1a7e, 4'b0000 );
+      repeat(4) @(posedge tb_clk); 
+      
+      dut.async_mem.async_mem_write( 32'h83300000, 32'h00000001, 4'b0000 );
+      repeat(6) @(posedge tb_clk); 
+      
+      dut.async_mem.async_mem_cmp( 32'h83300004, 32'h0000ffff, 4'b0000 );
       repeat(4) @(posedge tb_clk); 
       
       

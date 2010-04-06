@@ -99,15 +99,15 @@ module top(
 	wire        sys_clk = clock_24[0];
 	
 	
-  //---------------------------------------------------
-  // sync reset
-  sync 
-    i_sync_reset( 
-            .async_sig(~key[0]), 
-            .sync_out(sys_rst), 
-            .clk(sys_clk) 
-          );
-	
+//   //---------------------------------------------------
+//   // sync reset
+//   sync 
+//     i_sync_reset( 
+//             .async_sig(~key[0]), 
+//             .sync_out(sys_rst), 
+//             .clk(sys_clk) 
+//           );
+// 	
 
   //---------------------------------------------------
   // FLED
@@ -347,10 +347,16 @@ module top(
       .s2_err_i(s2_err_i),
       .s2_rty_i(s2_rty_i),
       // Slave 3 Interface
-      .s3_data_i(32'h0000_0000),
-      .s3_ack_i(1'b0),
-      .s3_err_i(1'b0),
-      .s3_rty_i(1'b0),
+      .s3_data_i(s3_data_i),
+      .s3_data_o(s3_data_o),
+      .s3_addr_o(s3_addr_o),
+      .s3_sel_o(s3_sel_o),
+      .s3_we_o(s3_we_o),
+      .s3_cyc_o(s3_cyc_o),
+      .s3_stb_o(s3_stb_o),
+      .s3_ack_i(s3_ack_i),
+      .s3_err_i(s3_err_i),
+      .s3_rty_i(s3_rty_i),
       // Slave 4 Interface
       .s4_data_i(32'h0000_0000),
       .s4_ack_i(1'b0),
@@ -465,7 +471,7 @@ module top(
   	          .wb_clk_i(sys_clk),
   	          .wb_rst_i(sys_rst),
   	          .wb_cyc_i(s1_cyc_o),
-  	          .wb_adr_i( {24'b0, s1_addr_o[7:0]} ),
+  	          .wb_adr_i( s1_addr_o[7:0] ),
   	          .wb_dat_i(s1_data_o),
   	          .wb_sel_i(s1_sel_o),
   	          .wb_we_i(s1_we_o),
@@ -505,7 +511,7 @@ module top(
   	          .wb_clk_i(sys_clk),
   	          .wb_rst_i(sys_rst),
   	          .wb_cyc_i(s2_cyc_o),
-  	          .wb_adr_i( {24'b0, s2_addr_o[7:0]} ),
+  	          .wb_adr_i( s2_addr_o[7:0] ),
   	          .wb_dat_i(s2_data_o),
   	          .wb_sel_i(s2_sel_o),
   	          .wb_we_i(s2_we_o),
@@ -529,6 +535,32 @@ module top(
             );
             
     
+  //---------------------------------------------------
+  // GPIO b
+  qaz_system
+    i_qaz_system(
+                    .sys_data_i(s3_data_o),
+                    .sys_data_o(s3_data_i),
+                    .sys_addr_i(s3_addr_o),
+                    .sys_sel_i(s3_sel_o),
+                    .sys_we_i(s3_we_o),
+                    .sys_cyc_i(s3_cyc_o),
+                    .sys_stb_i(s3_stb_o),
+                    .sys_ack_o(s3_ack_i),
+                    .sys_err_o(s3_err_i),
+                    .sys_rty_o(s3_rty_i),
+                    
+                    .async_rst_i(~key[0]),
+                    
+                    .hex0(gpio_a_aux_i[6:0]),
+                    .hex1(gpio_a_aux_i[14:8]),
+                    .hex2(gpio_a_aux_i[22:16]),
+                    .hex3(gpio_a_aux_i[30:24]),
+    
+                    .sys_clk_i(sys_clk), 
+                    .sys_rst_o(sys_rst)
+                  );
+      
   //---------------------------------------------------
   // IO pads
   genvar i;
@@ -580,14 +612,18 @@ module top(
   assign hex1             = gpio_a_io_buffer_o[14:8];
   assign hex2             = gpio_a_io_buffer_o[22:16];
   assign hex3             = gpio_a_io_buffer_o[30:24];
-  assign gpio_a_aux_i     = 32'b0;
+  assign gpio_a_aux_i[7]  = 1'b0;
+  assign gpio_a_aux_i[15] = 1'b0;
+  assign gpio_a_aux_i[23] = 1'b0;
+  assign gpio_a_aux_i[31] = 1'b0;
   assign gpio_a_ext_pad_i = 32'b0;
   
   assign ledg             = gpio_b_io_buffer_o[7:0];
   assign ledr             = gpio_b_io_buffer_o[17:8];
   assign gpio_b_aux_i     = { 24'b0, fled } ;
-  assign gpio_b_ext_pad_i = { key, sw, 18'b0};
+  assign gpio_b_ext_pad_i = { key, sw, 18'b0 };
   
+  assign gpio_1[35]       = ~gpio_b_inta_o;
   
 endmodule
 
