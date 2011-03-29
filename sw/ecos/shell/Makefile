@@ -6,11 +6,11 @@
 
 # INSTALL_DIR=$$(INSTALL_DIR) # override on make command line
 # INSTALL_DIR = ../ROM_slow/install
-INSTALL_DIR = ../LPC2294_ram/LPC2294_ram_install
+INSTALL_DIR = ../LPC2294_ram/install
 
-OBJECT_FILES = dbg_sh.o parse.o main.o memtest.o
-LIB_OBJECT_FILES = dbg_sh.o parse.o memtest.o
-HEADER_FILES = lpc22xx.h dbg_sh.h parse.h memtest.h
+OBJECT_FILES = parse.o main.o mem_func.o memtest.o dbg_sh.o
+LIB_OBJECT_FILES = parse.o mem_func.o memtest.o dbg_sh.o
+HEADER_FILES = lpc22xx.h dbg_sh.h parse.h shell_cmds.h memtest.h
 
 
 include $(INSTALL_DIR)/include/pkgconf/ecos.mak

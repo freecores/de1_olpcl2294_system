@@ -19,6 +19,8 @@ module qaz_system(
                     
                     input           async_rst_i,
                     
+                    output reg      sys_audio_clk_en,
+                    
                     output    [6:0]   hex0,
                     output    [6:0]   hex1,
                     output    [6:0]   hex2,
@@ -51,7 +53,18 @@ module qaz_system(
     else if( (sys_cyc_i & sys_stb_i & sys_we_i) & (register_offset_r == 4'h0) )
       sys_rst_r <= sys_data_i[0];
       
-  wire [31:0]  sys_register_0 = { 31'b0, sys_rst_r };
+  always @( posedge sys_clk_i )
+    if( sys_rst_o )
+      sys_audio_clk_en <= 1'h0;
+    else if( (sys_cyc_i & sys_stb_i & sys_we_i) & (register_offset_r == 4'h0) )
+      sys_audio_clk_en <= sys_data_i[4];
+      
+  wire [31:0]  sys_register_0 = { 
+                                  27'b0, 
+                                  sys_audio_clk_en,
+                                  3'b000,
+                                  sys_rst_r 
+                                };
     
   
   //---------------------------------------------------

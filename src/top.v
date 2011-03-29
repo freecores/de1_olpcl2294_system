@@ -30,7 +30,7 @@ module top(
   ///////////////////////       SDRAM Interface ////////////////////////
   inout [15:0]      dram_dq,                //  SDRAM Data bus 16 Bits
   output    [11:0]  dram_addr,              //  SDRAM Address bus 12 Bits
-  output            dram_ldqm,              //  SDRAM Low-byte Data Mask 
+  output            dram_ldqm,              //  SDRAM Low-byte Data Mask
   output            dram_udqm,              //  SDRAM High-byte Data Mask
   output            dram_we_n,              //  SDRAM Write Enable
   output            dram_cas_n,             //  SDRAM Column Address Strobe
@@ -50,8 +50,8 @@ module top(
   ////////////////////////  SRAM Interface  ////////////////////////
   inout   [15:0]    sram_dq,                //  SRAM Data bus 16 Bits
   output  [17:0]    sram_addr,              //  SRAM Address bus 18 Bits
-  output            sram_ub_n,              //  SRAM High-byte Data Mask 
-  output            sram_lb_n,              //  SRAM Low-byte Data Mask 
+  output            sram_ub_n,              //  SRAM High-byte Data Mask
+  output            sram_lb_n,              //  SRAM Low-byte Data Mask
   output            sram_we_n,              //  SRAM Write Enable
   output            sram_ce_n,              //  SRAM Chip Enable
   output            sram_oe_n,              //  SRAM Output Enable
@@ -62,7 +62,7 @@ module top(
   output            sd_clk,                 //  SD Card Clock
   ////////////////////////  I2C     ////////////////////////////////
   inout             i2c_sdat,               //  I2C Data
-  output            i2c_sclk,               //  I2C Clock
+  inout             i2c_sclk,               //  I2C Clock
   ////////////////////////  PS2     ////////////////////////////////
   input             ps2_dat,                //  PS2 Data
   input             ps2_clk,                //  PS2 Clock
@@ -89,25 +89,53 @@ module top(
   inout [35:0]      gpio_1                  //  GPIO Connection 1
 );
 
-	parameter DW 	= 32; 
-	parameter AW 	= 32; 
+	parameter DW 	= 32;
+	parameter AW 	= 32;
 
 
   //---------------------------------------------------
   // system wires
-	wire 				sys_rst;
-	wire        sys_clk = clock_24[0];
-	
-	
+	wire sys_rst;
+// 	wire sys_clk = clock_27[0];
+	wire sys_clk;
+	wire sys_audio_clk_en;
+
+
+  //---------------------------------------------------
+  // pll
+  qaz_pll
+    i_qaz_pll
+    (
+      .clock_24(clock_24),               //  24 MHz
+      .clock_27(clock_27),               //  27 MHz
+      .clock_50(clock_50),               //  50 MHz
+      .ext_clock(ext_clock),              //  External Clock
+
+      .sys_audio_clk_en(sys_audio_clk_en),
+
+      .aud_xck(aud_xck),
+      .sys_clk(sys_clk)
+    );
+
+
 //   //---------------------------------------------------
-//   // sync reset
-//   sync 
-//     i_sync_reset( 
-//             .async_sig(~key[0]), 
-//             .sync_out(sys_rst), 
-//             .clk(sys_clk) 
-//           );
-// 	
+//   // audio clock
+//   wire	CLK_18_4, outclk_sig;
+
+//   PLL
+//     u0(
+//         .inclk0(clock_27[0]),
+//         .c0(CLK_18_4)
+//       );
+//
+//   clk_buffer	clk_buffer_inst (
+//   	.ena ( sys_audio_clk_en ),
+//   	.inclk ( CLK_18_4 ),
+//   	.outclk ( outclk_sig )
+//   	);
+//
+//   assign  aud_xck =	outclk_sig;
+
 
   //---------------------------------------------------
   // FLED
@@ -119,7 +147,7 @@ module top(
   		counter <= 25'b0;
   	else
   		counter <= counter + 1;
-  
+
 	assign fled[0]  = sw[0];
 	assign fled[1]  = sw[1];
 	assign fled[2]  = sw[2];
@@ -128,8 +156,8 @@ module top(
 	assign fled[5]  = sw[5];
 	assign fled[6]  = sw[6];
 	assign fled[7]  = counter[24];
-	
-	
+
+
 // --------------------------------------------------------------------
 //  wb_async_mem_bridge
   wire [31:0] m0_data_i;
@@ -142,7 +170,7 @@ module top(
   wire        m0_ack_i;
   wire        m0_err_i;
   wire        m0_rty_i;
-  
+
   wb_async_mem_bridge #( .AW(24) )
     i_wb_async_mem_bridge(
       .wb_data_i(m0_data_i),
@@ -155,19 +183,19 @@ module top(
       .wb_ack_i(m0_ack_i),
       .wb_err_i(m0_err_i),
       .wb_rty_i(m0_rty_i),
-      
+
       .mem_d( gpio_1[31:0] ),
       .mem_a( gpio_0[23:0] ),
       .mem_oe_n( gpio_0[30] ),
       .mem_bls_n( { gpio_0[26], gpio_0[27], gpio_0[28], gpio_0[29] } ),
       .mem_we_n( gpio_0[25] ),
       .mem_cs_n( gpio_0[24] ),
-      
+
       .wb_clk_i(sys_clk),
       .wb_rst_i(sys_rst)
     );
-  
-  
+
+
   //---------------------------------------------------
   // wb_conmax_top
 
@@ -249,7 +277,7 @@ module top(
   wire            s6_ack_i;
   wire            s6_err_i;
   wire            s6_rty_i;
-      
+
   wb_conmax_top
     i_wb_conmax_top(
       // Master 0 Interface
@@ -263,7 +291,7 @@ module top(
       .m0_ack_o(m0_ack_i),
       .m0_err_o(m0_err_i),
       .m0_rty_o(m0_rty_i),
-      // Master 1 Interface 
+      // Master 1 Interface
       .m1_data_i(32'h0000_0000),
       .m1_addr_i(32'h0000_0000),
       .m1_sel_i(4'h0),
@@ -312,7 +340,7 @@ module top(
       .m7_we_i(1'b0),
       .m7_cyc_i(1'b0),
       .m7_stb_i(1'b0),
-      
+
       // Slave 0 Interface
       .s0_data_i(s0_data_i),
       .s0_data_o(s0_data_o),
@@ -358,15 +386,27 @@ module top(
       .s3_err_i(s3_err_i),
       .s3_rty_i(s3_rty_i),
       // Slave 4 Interface
-      .s4_data_i(32'h0000_0000),
-      .s4_ack_i(1'b0),
-      .s4_err_i(1'b0),
-      .s4_rty_i(1'b0),
+      .s4_data_i(s4_data_i),
+      .s4_data_o(s4_data_o),
+      .s4_addr_o(s4_addr_o),
+      .s4_sel_o(s4_sel_o),
+      .s4_we_o(s4_we_o),
+      .s4_cyc_o(s4_cyc_o),
+      .s4_stb_o(s4_stb_o),
+      .s4_ack_i(s4_ack_i),
+      .s4_err_i(s4_err_i),
+      .s4_rty_i(s4_rty_i),
       // Slave 5 Interface
-      .s5_data_i(32'h0000_0000),
-      .s5_ack_i(1'b0),
-      .s5_err_i(1'b0),
-      .s5_rty_i(1'b0),
+      .s5_data_i(s5_data_i),
+      .s5_data_o(s5_data_o),
+      .s5_addr_o(s5_addr_o),
+      .s5_sel_o(s5_sel_o),
+      .s5_we_o(s5_we_o),
+      .s5_cyc_o(s5_cyc_o),
+      .s5_stb_o(s5_stb_o),
+      .s5_ack_i(s5_ack_i),
+      .s5_err_i(s5_err_i),
+      .s5_rty_i(s5_rty_i),
       // Slave 6 Interface
       .s6_data_i(32'h0000_0000),
       .s6_ack_i(1'b0),
@@ -417,27 +457,27 @@ module top(
       .s15_ack_i(1'b0),
       .s15_err_i(1'b0),
       .s15_rty_i(1'b0),
-      
+
       .clk_i(sys_clk),
       .rst_i(sys_rst)
-    );	
-    
-    
+    );
+
+
   //---------------------------------------------------
   // async_mem_if
   assign s0_err_i = 1'b0;
   assign s0_rty_i = 1'b0;
-  
+
   async_mem_if #( .AW(18), .DW(16) )
     i_sram (
-      .async_dq(sram_dq),    
-      .async_addr(sram_addr),  
-      .async_ub_n(sram_ub_n),  
-      .async_lb_n(sram_lb_n),  
-      .async_we_n(sram_we_n),  
-      .async_ce_n(sram_ce_n),  
-      .async_oe_n(sram_oe_n),  
-      .wb_clk_i(sys_clk),   
+      .async_dq(sram_dq),
+      .async_addr(sram_addr),
+      .async_ub_n(sram_ub_n),
+      .async_lb_n(sram_lb_n),
+      .async_we_n(sram_we_n),
+      .async_ce_n(sram_ce_n),
+      .async_oe_n(sram_oe_n),
+      .wb_clk_i(sys_clk),
       .wb_rst_i(sys_rst),
       .wb_adr_i( {14'h0000, s0_addr_o[17:0]} ),
       .wb_dat_i(s0_data_o),
@@ -447,25 +487,25 @@ module top(
       .wb_sel_i(s0_sel_o),
       .wb_dat_o(s0_data_i),
       .wb_ack_o(s0_ack_i),
-      .ce_setup(4'h0), 
-      .op_hold(4'h1), 
+      .ce_setup(4'h0),
+      .op_hold(4'h1),
       .ce_hold(4'h0),
       .big_endian_if_i(1'b0),
       .lo_byte_if_i(1'b0)
     );
-              
+
 
   //---------------------------------------------------
   // GPIO a
   assign s1_rty_i = 1'b0;
-  
+
   wire        gpio_a_inta_o;
   wire        gpio_a_clk_i;
   wire [31:0] gpio_a_aux_i;
   wire [31:0] gpio_a_ext_pad_i;
   wire [31:0] gpio_a_ext_pad_o;
   wire [31:0] gpio_a_ext_padoe_o;
-  
+
   gpio_top
     i_gpio_a(
   	          .wb_clk_i(sys_clk),
@@ -480,32 +520,32 @@ module top(
   	          .wb_ack_o(s1_ack_i),
   	          .wb_err_o(s1_err_i),
   	          .wb_inta_o(gpio_a_inta_o),
-  	          
+
 `ifdef GPIO_AUX_IMPLEMENT
   	          .aux_i(gpio_a_aux_i),
 `endif // GPIO_AUX_IMPLEMENT
-  	          
+
 `ifdef GPIO_CLKPAD
               .clk_pad_i(gpio_a_clk_i),
 `endif //  GPIO_CLKPAD
-              
+
   	          .ext_pad_i(gpio_a_ext_pad_i),
   	          .ext_pad_o(gpio_a_ext_pad_o),
   	          .ext_padoe_o(gpio_a_ext_padoe_o)
             );
-    
-    	
+
+
   //---------------------------------------------------
   // GPIO b
   assign s2_rty_i = 1'b0;
-  
+
   wire        gpio_b_inta_o;
   wire        gpio_b_clk_i;
   wire [31:0] gpio_b_aux_i;
   wire [31:0] gpio_b_ext_pad_i;
   wire [31:0] gpio_b_ext_pad_o;
   wire [31:0] gpio_b_ext_padoe_o;
-  
+
   gpio_top
     i_gpio_b(
   	          .wb_clk_i(sys_clk),
@@ -520,23 +560,23 @@ module top(
   	          .wb_ack_o(s2_ack_i),
   	          .wb_err_o(s2_err_i),
   	          .wb_inta_o(gpio_b_inta_o),
-  	          
+
 `ifdef GPIO_AUX_IMPLEMENT
   	          .aux_i(gpio_b_aux_i),
 `endif // GPIO_AUX_IMPLEMENT
-  	          
+
 `ifdef GPIO_CLKPAD
               .clk_pad_i(gpio_b_clk_i),
 `endif //  GPIO_CLKPAD
-              
+
   	          .ext_pad_i(gpio_b_ext_pad_i),
   	          .ext_pad_o(gpio_b_ext_pad_o),
   	          .ext_padoe_o(gpio_b_ext_padoe_o)
             );
-            
-    
+
+
   //---------------------------------------------------
-  // GPIO b
+  // qaz_system
   qaz_system
     i_qaz_system(
                     .sys_data_i(s3_data_o),
@@ -549,65 +589,183 @@ module top(
                     .sys_ack_o(s3_ack_i),
                     .sys_err_o(s3_err_i),
                     .sys_rty_o(s3_rty_i),
-                    
+
                     .async_rst_i(~key[0]),
-                    
+
+                    .sys_audio_clk_en(sys_audio_clk_en),
+
                     .hex0(gpio_a_aux_i[6:0]),
                     .hex1(gpio_a_aux_i[14:8]),
                     .hex2(gpio_a_aux_i[22:16]),
                     .hex3(gpio_a_aux_i[30:24]),
-    
-                    .sys_clk_i(sys_clk), 
+
+                    .sys_clk_i(sys_clk),
                     .sys_rst_o(sys_rst)
                   );
-      
+
+
+  //---------------------------------------------------
+  // simple pic
+  wire        int_o;
+  wire [1:0]  irq;
+
+  qaz_pic
+    i_qaz_pic
+    (
+      .sys_data_i(s4_data_o),
+      .sys_data_o(s4_data_i),
+      .sys_addr_i(s4_addr_o),
+      .sys_sel_i(s4_sel_o),
+      .sys_we_i(s4_we_o),
+      .sys_cyc_i(s4_cyc_o),
+      .sys_stb_i(s4_stb_o),
+      .sys_ack_o(s4_ack_i),
+      .sys_err_o(s4_err_i),
+      .sys_rty_o(s4_rty_i),
+
+      .int_o(int_o),
+      .irq(irq),
+
+      .sys_clk_i(sys_clk),
+      .sys_rst_i(sys_rst)
+    );
+
+  //---------------------------------------------------
+  // i2c_master_top
+  wire i2c_inta_o;
+  wire scl_pad_i;
+  wire scl_pad_o;
+  wire scl_padoen_o;
+  wire sda_pad_i;
+  wire sda_pad_o;
+  wire sda_padoen_o;
+
+  // i2c data out
+  wire [7:0] i2c_data_o;
+
+  assign s5_data_i[7:0] = i2c_data_o;
+  assign s5_data_i[15:8] = i2c_data_o;
+  assign s5_data_i[23:16] = i2c_data_o;
+  assign s5_data_i[31:24] = i2c_data_o;
+
+  // i2c data in mux
+  reg [7:0] i2c_data_i_mux;
+
+  always @(*)
+    case( s5_sel_o )
+      4'b0001:  i2c_data_i_mux = s5_data_o[7:0];
+      4'b0010:  i2c_data_i_mux = s5_data_o[15:8];
+      4'b0100:  i2c_data_i_mux = s5_data_o[23:16];
+      4'b1000:  i2c_data_i_mux = s5_data_o[31:24];
+      default:  i2c_data_i_mux = s5_data_o[7:0];
+    endcase
+
+  // i2c bus error
+  reg i2c_bus_error;
+
+  always @(*)
+    case( s5_sel_o )
+      4'b0001:  i2c_bus_error = 1'b0;
+      4'b0010:  i2c_bus_error = 1'b0;
+      4'b0100:  i2c_bus_error = 1'b0;
+      4'b1000:  i2c_bus_error = 1'b0;
+      default:  i2c_bus_error = 1'b1;
+    endcase
+
+  // i2c_master_top
+  assign s5_err_i = 1'b0;
+  assign s5_rty_i = 1'b0;
+
+  i2c_master_top
+    i_i2c_master_top
+    (
+      // wishbone signals
+      .wb_clk_i(sys_clk),     // master clock input
+      .wb_rst_i(sys_rst),     // synchronous active high reset
+      .arst_i(1'b1),       // asynchronous reset
+      .wb_adr_i(s5_addr_o[2:0]),     // lower address bits
+      .wb_dat_i(i2c_data_i_mux),     // databus input
+      .wb_dat_o(i2c_data_o),     // databus output
+      .wb_we_i(s5_we_o),      // write enable input
+      .wb_stb_i(s5_stb_o),     // stobe/core select signal
+      .wb_cyc_i(s5_cyc_o),     // valid bus cycle input
+      .wb_ack_o(s5_ack_i),     // bus cycle acknowledge output
+      .wb_inta_o(i2c_inta_o),    // interrupt request signal output
+
+      // i2c clock line
+      .scl_pad_i(scl_pad_i),       // SCL-line input
+      .scl_pad_o(scl_pad_o),       // SCL-line output (always 1'b0)
+      .scl_padoen_o(scl_padoen_o),    // SCL-line output enable (active low)
+
+      // i2c data line
+      .sda_pad_i(sda_pad_i),       // SDA-line input
+      .sda_pad_o(sda_pad_o),       // SDA-line output (always 1'b0)
+      .sda_padoen_o(sda_padoen_o)    // SDA-line output enable (active low)
+      );
+
+
+  //---------------------------------------------------
+  // i2s_to_wb_tx
+  i2s_to_wb_tx i_i2s_to_wb_tx
+  (
+//     .i2s_data_i(i2s_data_i),
+//     .i2s_data_o(i2s_data_o),
+//     .i2s_addr_i(i2s_addr_i),
+//     .i2s_sel_i(i2s_sel_i),
+//     .i2s_we_i(i2s_we_i),
+//     .i2s_cyc_i(i2s_cyc_i),
+//     .i2s_stb_i(i2s_stb_i),
+//     .i2s_ack_o(i2s_ack_o),
+//     .i2s_err_o(i2s_err_o),
+//     .i2s_rty_o(i2s_rty_o),
+
+    .i2s_sck_i(aud_bclk),
+    .i2s_ws_i(aud_daclrck),
+    .i2s_sd_o(aud_dacdat),
+
+    .i2s_clk_i(sys_clk),
+    .i2s_rst_i(sys_rst)
+  );
+
+
   //---------------------------------------------------
   // IO pads
   genvar i;
-  
+
   // gpio a
   wire [31:0] gpio_a_io_buffer_o;
-  
+
   generate for( i = 0; i < 32; i = i + 1 )
     begin: gpio_a_pads
       assign gpio_a_io_buffer_o[i] = gpio_a_ext_padoe_o[i] ? gpio_a_ext_pad_o[i] : 1'bz;
-    end  
-  endgenerate  
+    end
+  endgenerate
 
   // gpio b
   wire [31:0] gpio_b_io_buffer_o;
-  
+
   generate for( i = 0; i < 32; i = i + 1 )
     begin: gpio_b_pads
       assign gpio_b_io_buffer_o[i] = gpio_b_ext_padoe_o[i] ? gpio_b_ext_pad_o[i] : 1'bz;
-    end  
-  endgenerate  
-  
-      	
+    end
+  endgenerate
+
+  // i2c
+  assign i2c_sclk = scl_padoen_o ? 1'bz : scl_pad_o;
+  assign i2c_sdat = sda_padoen_o ? 1'bz : sda_pad_o;
+
   //---------------------------------------------------
   // outputs
-  
-  //  Turn off all display
-//   assign  hex0        =   7'h7f;
-//   assign  hex1        =   7'h7f;
-//   assign  hex2        =   7'h7f;
-//   assign  hex3        =   7'h7f;
-//   assign  ledg        =   8'hff;
-//   assign  ledg        =   fled;
-//   assign  ledr        =   10'h000;
-  
+
   //  All inout port turn to tri-state
   assign  dram_dq     =   16'hzzzz;
   assign  fl_dq       =   8'hzz;
-//   assign  sram_dq     =   16'hzzzz;
   assign  sd_dat      =   1'bz;
-  assign  i2c_sdat    =   1'bz;
-  assign  aud_adclrck =   1'bz;
-  assign  aud_daclrck =   1'bz;
-  assign  aud_bclk    =   1'bz;
-//   assign  gpio_0      =   36'hzzzzzzzzz;
-//   assign  gpio_1      =   36'hzzzzzzzzz;
-  
+//   assign  i2c_sdat    =   1'bz;
+//   assign  aud_adclrck =   1'bz;
+//   assign  aud_daclrck =   1'bz;
+//   assign  aud_bclk    =   1'bz;
+
   assign hex0             = gpio_a_io_buffer_o[6:0];
   assign hex1             = gpio_a_io_buffer_o[14:8];
   assign hex2             = gpio_a_io_buffer_o[22:16];
@@ -617,13 +775,20 @@ module top(
   assign gpio_a_aux_i[23] = 1'b0;
   assign gpio_a_aux_i[31] = 1'b0;
   assign gpio_a_ext_pad_i = 32'b0;
-  
+
   assign ledg             = gpio_b_io_buffer_o[7:0];
   assign ledr             = gpio_b_io_buffer_o[17:8];
   assign gpio_b_aux_i     = { 24'b0, fled } ;
   assign gpio_b_ext_pad_i = { key, sw, 18'b0 };
-  
-  assign gpio_1[35]       = ~gpio_b_inta_o;
-  
+
+//   assign gpio_1[35]       = ~gpio_b_inta_o;
+  assign gpio_1[35] = ~int_o;
+  assign irq[0]     = ~gpio_b_inta_o;
+//   assign irq[1]     = 1'b1;
+  assign irq[1]     = ~i2c_inta_o;
+
+  assign scl_pad_i = i2c_sclk;
+  assign sda_pad_i = i2c_sdat;
+
 endmodule
 
